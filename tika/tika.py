@@ -58,6 +58,7 @@ or:
     detected = detector.from_buffer('some buffered content', config_path='/path/to/configfile')
 
 '''
+from http import server
 import types
 
 USAGE = """
@@ -585,10 +586,8 @@ def checkTikaServer(scheme="http", serverHost=ServerHost, port=Port, tikaServerJ
     urlp = urlparse(tikaServerJar)
     serverEndpoint = '%s://%s:%s' % (scheme, serverHost, port)
     jarPath = os.path.join(TikaJarPath, 'tika-server.jar')
-
     if 'localhost' in serverEndpoint or '127.0.0.1' in serverEndpoint:
         alreadyRunning = checkPortIsOpen(serverHost, port)
-
         if not alreadyRunning:
             if not os.path.isfile(jarPath) and urlp.scheme != '':
                 log.error("Jar file is missing.")
