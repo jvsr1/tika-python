@@ -145,7 +145,7 @@ import logging
 import io
 import ctypes
 
-log_path = os.getenv('TIKA_LOG_PATH', tempfile.gettempdir())
+log_path = os.getenv('TIKA_LOG_PATH', os.getcwd()+"/tika-log/")
 log_file = os.path.join(log_path, os.getenv('TIKA_LOG_FILE', 'tika.log'))
 
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
@@ -167,8 +167,7 @@ log.setLevel(logging.INFO)
 
 Windows = True if platform.system() == "Windows" else False
 TikaVersion = os.getenv('TIKA_VERSION', '1.24')
-# TikaJarPath = os.getenv('TIKA_PATH', tempfile.gettempdir())
-TikaJarPath = os.getenv('TIKA_PATH', os.getcwd() + "/tika-server/")
+TikaJarPath = os.getenv('TIKA_PATH', os.getcwd()+"/tika-server/")
 TikaFilesPath = tempfile.gettempdir()
 TikaServerLogFilePath = log_path
 TikaServerJar = os.getenv('TIKA_SERVER_JAR','')
@@ -591,7 +590,7 @@ def checkTikaServer(scheme="http", serverHost=ServerHost, port=Port, tikaServerJ
 
         if not alreadyRunning:
             if not os.path.isfile(jarPath) and urlp.scheme != '':
-                log.error("File is missing or not properly configured.")
+                log.error("Jar file is missing.")
                 raise RuntimeError("Unable to start Tika Server.")
 
             if not checkJarSig(tikaServerJar, jarPath):
@@ -648,11 +647,14 @@ def startServer(tikaServerJar, java_path = TikaJava, java_args = TikaJavaArgs, s
     else:
         classpath = tikaServerJar
 
+    print(classpath)
+
     # setup command string
     cmd_string = ""
     if not config_path:
         cmd_string = '%s %s -cp "%s" org.apache.tika.server.TikaServerCli --port %s --host %s &' \
                      % (java_path, java_args, classpath, port, host)
+        print(cmd_string)
     else:
         cmd_string = '%s %s -cp "%s" org.apache.tika.server.TikaServerCli --port %s --host %s --config %s &' \
                      % (java_path, java_args, classpath, port, host, config_path)
