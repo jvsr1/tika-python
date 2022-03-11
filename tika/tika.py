@@ -18,7 +18,7 @@
 
 # Module documentation
 '''
-Tika Python module provides Python API client to Aapche Tika Server.
+Tika Python module provides Python API client to Apache Tika Server.
 
 **Example usage**::
 
@@ -167,12 +167,12 @@ log.setLevel(logging.INFO)
 
 Windows = True if platform.system() == "Windows" else False
 TikaVersion = os.getenv('TIKA_VERSION', '1.24')
-TikaJarPath = os.getenv('TIKA_PATH', tempfile.gettempdir())
+# TikaJarPath = os.getenv('TIKA_PATH', tempfile.gettempdir())
+TikaJarPath = os.getenv('TIKA_PATH', os.getcwd() + "/tika-server/")
 TikaFilesPath = tempfile.gettempdir()
 TikaServerLogFilePath = log_path
-TikaServerJar = os.getenv(
-    'TIKA_SERVER_JAR',
-    "http://search.maven.org/remotecontent?filepath=org/apache/tika/tika-server/"+TikaVersion+"/tika-server-"+TikaVersion+".jar")
+TikaServerJar = os.getenv('TIKA_SERVER_JAR','')
+
 ServerHost = "localhost"
 Port = "9998"
 ServerEndpoint = os.getenv(
@@ -519,11 +519,11 @@ def callServer(verb, serverEndpoint, service, data, headers, verbose=Verbose, ti
     :param classpath:
     :return:
     '''
-    parsedUrl = urlparse(serverEndpoint) 
+    parsedUrl = urlparse(serverEndpoint)
     serverHost = parsedUrl.hostname
     scheme = parsedUrl.scheme
-
     port = parsedUrl.port
+
     if classpath is None:
         classpath = TikaServerClasspath
     
@@ -585,16 +585,19 @@ def checkTikaServer(scheme="http", serverHost=ServerHost, port=Port, tikaServerJ
     urlp = urlparse(tikaServerJar)
     serverEndpoint = '%s://%s:%s' % (scheme, serverHost, port)
     jarPath = os.path.join(TikaJarPath, 'tika-server.jar')
+
     if 'localhost' in serverEndpoint or '127.0.0.1' in serverEndpoint:
         alreadyRunning = checkPortIsOpen(serverHost, port)
 
         if not alreadyRunning:
             if not os.path.isfile(jarPath) and urlp.scheme != '':
-                getRemoteJar(tikaServerJar, jarPath)
+                log.error("File is missing or not properly configured.")
+                raise RuntimeError("Unable to start Tika Server.")
 
             if not checkJarSig(tikaServerJar, jarPath):
                 os.remove(jarPath)
-                tikaServerJar = getRemoteJar(tikaServerJar, jarPath)
+                log.error("Signature does not match jar file.")
+                raise RuntimeError("Unable to start Tika Server.")
 
             status = startServer(jarPath, TikaJava, TikaJavaArgs, serverHost, port, classpath, config_path)
             if not status:
