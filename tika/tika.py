@@ -168,7 +168,8 @@ log.setLevel(logging.INFO)
 Windows = True if platform.system() == "Windows" else False
 TikaVersion = os.getenv('TIKA_VERSION', '1.24')
 TikaJarPath = os.getenv('TIKA_PATH', os.getcwd()+"/tika-server/")
-TikaFilesPath = tempfile.gettempdir()
+TikaFilesPath = os.getenv('TIKA_PATH', os.getcwd() + "/files-path/")
+# TikaFilesPath = tempfile.gettempdir()
 TikaServerLogFilePath = log_path
 TikaServerJar = os.getenv('TIKA_SERVER_JAR','')
 
@@ -594,7 +595,6 @@ def checkTikaServer(scheme="http", serverHost=ServerHost, port=Port, tikaServerJ
                 raise RuntimeError("Unable to start Tika Server.")
 
             if not checkJarSig(tikaServerJar, jarPath):
-                os.remove(jarPath)
                 log.error("Signature does not match jar file.")
                 raise RuntimeError("Unable to start Tika Server.")
 
@@ -612,7 +612,8 @@ def checkJarSig(tikaServerJar, jarPath):
     :return: ``True`` if the signature of the jar matches
     '''
     if not os.path.isfile(jarPath + ".md5"):
-        getRemoteJar(tikaServerJar + ".md5", jarPath + ".md5")
+        log.error("Signature of Jar file is missing.")
+        raise RuntimeError("Unable to start Tika Server.")
     m = hashlib.md5()
     with open(jarPath, 'rb') as f:
         binContents = f.read()
@@ -647,14 +648,11 @@ def startServer(tikaServerJar, java_path = TikaJava, java_args = TikaJavaArgs, s
     else:
         classpath = tikaServerJar
 
-    print(classpath)
-
     # setup command string
     cmd_string = ""
     if not config_path:
         cmd_string = '%s %s -cp "%s" org.apache.tika.server.TikaServerCli --port %s --host %s &' \
                      % (java_path, java_args, classpath, port, host)
-        print(cmd_string)
     else:
         cmd_string = '%s %s -cp "%s" org.apache.tika.server.TikaServerCli --port %s --host %s --config %s &' \
                      % (java_path, java_args, classpath, port, host, config_path)
